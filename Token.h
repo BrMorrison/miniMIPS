@@ -10,12 +10,15 @@ class Token
     
     public:
     // Public enumerated types    
+
+    // General token types
     enum TYPE {
         TYPE_END,
         TYPE_OPERATION,
         TYPE_INTEGER
     };
 
+    // Different operations for OPERATION tokens
     enum OPS {
         OPS_PLUS,
         OPS_MINUS,

@@ -39,12 +39,30 @@ Token Lexer::getNextToken()
         return Token(Token::TYPE_INTEGER, tmp);
     }
 
-    // See if the character is a '+'
     else if(currentChar == '+')
     {
+        // advance the stream
+        *input >> currentChar;
+        // get the next character
+        currentChar = input->peek();
+        // create an addition token
+        return Token(Token::TYPE_OPERATION, Token::OPS_PLUS);
+    }
+
+    else if(currentChar == '-')
+    {
+        // see the '+' description
         *input >> currentChar;
         currentChar = input->peek();
-        return Token(Token::TYPE_OPERATION, Token::OPS_PLUS);
+        return Token(Token::TYPE_OPERATION, Token::OPS_MINUS);
+    }
+
+    else if(currentChar == '*')
+    {
+        // see the '+' description
+        *input >> currentChar;
+        currentChar = input->peek();
+        return Token(Token::TYPE_OPERATION, Token::OPS_TIMES);
     }
 
     // It wasn't a characer we support, so throw an error

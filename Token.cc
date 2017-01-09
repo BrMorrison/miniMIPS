@@ -24,6 +24,7 @@ std::string Token::TypeName(Token::TYPE type)
 // Allow for tokens to be output to streams
 std::ostream& operator<<(std::ostream& out, const Token& tok)
 {
+    // TODO: Modify this to work with the new operation tokens
     out << "Token(" << Token::TypeName(tok.type);
     if(tok.getValue() != -1)
     {

@@ -64,7 +64,21 @@ int Interpreter::exec(const std::string &line)
     right = *(ct++);
     this->eat(Token::TYPE_INTEGER, right);
 
-    return (left.getValue() + right.getValue());
+    // Perform the arithmetic based on the value of op
+    switch(op.getValue())
+    {
+        case(Token::OPS_PLUS):
+            return (left.getValue() + right.getValue());
+
+        case(Token::OPS_MINUS):
+            return (left.getValue() - right.getValue());
+
+        case(Token::OPS_TIMES):
+            return (left.getValue() * right.getValue());
+
+        default:
+            return -1;
+    }
 }
 
 // Run the interpreter and keep going until we hit the end of file
@@ -78,6 +92,13 @@ void Interpreter::run()
     // is running off stdin)
     if (prompt)
     {
+        std::cout << std::endl;
+        std::cout << "Welcome to what is currently a simple calculator!" << std::endl << std::endl
+            << "To use it just enter a simple positive integer expression at the prompt." << std::endl
+            << "For example, you can enter something like \"2+3\" or \"12 * 7\"." << std::endl
+            << "The currently the following operations are supported:" << std::endl
+            << "Addition, subtraction, and multiplication (but not division)" << std::endl;
+        std::cout << "Type \"quit\" to exit" << std::endl << std::endl;
         std::cout << "Calc>";
     }
 
