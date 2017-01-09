@@ -1,21 +1,18 @@
 #include "Token.h"
 #include <iostream>
-#include <string>
 
 // Convert the ENUMS to strings
-std::string Token::TypeName(TOKEN_TYPE_E type) 
+std::string Token::TypeName(Token::TYPE type) 
 {
+    // This is a very C-esque function and I might replace it with a map
     switch(type) {
-        case INTEGER:
+        case Token::TYPE_INTEGER:
             return "INTEGER";
 
-        case PLUS:
-            return "PLUS";
+        case Token::TYPE_OPERATION:
+            return "OPERATION";
 
-        case MINUS:
-            return "MINUX";
-
-        case END:
+        case Token::TYPE_END:
             return "END";
 
         // TODO: Make this throw an error
@@ -24,6 +21,7 @@ std::string Token::TypeName(TOKEN_TYPE_E type)
     }
 }
 
+// Allow for tokens to be output to streams
 std::ostream& operator<<(std::ostream& out, const Token& tok)
 {
     out << "Token(" << Token::TypeName(tok.type);
@@ -35,6 +33,7 @@ std::ostream& operator<<(std::ostream& out, const Token& tok)
     return out;
 }
 
+// Allow for copy assignment of Tokens
 Token& Token::operator=(const Token& rhs)
 {
     type = rhs.type; 

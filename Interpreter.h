@@ -4,42 +4,27 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <stdexcept>
-#include <memory>
-#include <cstdlib>
-#include "Token.h"
+#include "Lexer.h"
 
-// Create the Interpeter Class
+// Interpeter Class
 class Interpreter {
 
     // public constructors
     public:
-        Interpreter(const std::string &str);
+        Interpreter();
+        Interpreter(const std::string &file);
 
     // public member functions
-    public:
-        int expr();
+        void run();
 
     // private member functions
     private:
-        Token *getNextToken();
-        int parseInt();
-        void skipSpace();
-        void eat(const TOKEN_TYPE_E &token_type);
-        void advance();
+        int exec(const std::string &);
+        void eat(Token::TYPE, const Token &);
 
     // private instance variables
-        std::unique_ptr<std::istream> text;
-        Token *currentToken;
-        char currentChar;
+        std::istream *text;
+        bool prompt;
 };
-
-//TODO: Stop using a unique_ptr and make a deconstructor instead
-Interpreter::Interpreter(const std::string &str)
-{ 
-    // Create a unique pointer for the string stream
-    std::unique_ptr<std::istream> tmp(new std::istringstream(str)); 
-    text = std::move(tmp);
-}
 
 #endif
