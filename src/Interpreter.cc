@@ -19,18 +19,16 @@ Interpreter::Interpreter(const std::string &str)
 
 // Performs a check to make sure that an expected token type was encountered.
 // If the token encountered was not the expected type then a runtime error is thrown.
-void Interpreter::eat(Token::TYPE token_type, const Token &t)
+void Interpreter::eat(Token::Type token_type, Token *t)
 {
-    if (t.getType() != token_type)
+    if (t->getType() != token_type)
     {
         // Use a string stream to create an informative error message.
         std::ostringstream oss;
-        oss << "Unexpected token encountered: " << t << std::endl;
-        oss << "Expected a token of type: " << Token::TypeName(token_type);
+        oss << "Unexpected token encountered: " << *t << std::endl;
         throw std::runtime_error(oss.str());
     }
-    // Currently if the expected type is encountered then no actions are performed.
-    // In the future this may be expanded to advance the code execution as well.
+    // If the token is the right kind, do nothing
 }
 
 // Executes a single line of code and returns the result.
@@ -44,7 +42,7 @@ int Interpreter::exec(const std::string &line)
     // interpreter has to start doing real work instead of simple math.
     
     // These are the tokens we will need for our math operation
-    Token left, op, right;
+    Token *left, *op, *right;
 
     // Take the line of code and send it to the lexer to get some tokens
     Lexer lex = Lexer(line);
@@ -54,27 +52,27 @@ int Interpreter::exec(const std::string &line)
 
     // Get the left side of the expression
     left  = *(ct++);
-    this->eat(Token::TYPE_INTEGER, left);
+    this->eat(Token::INT, left);
 
     // Get the operation
     op = *(ct++);
-    this->eat(Token::TYPE_OPERATION, op);
+    this->eat(Token::OP, op);
 
     // Get the right side of the expression
     right = *(ct++);
-    this->eat(Token::TYPE_INTEGER, right);
+    this->eat(Token::INT, right);
 
     // Perform the arithmetic based on the value of op
-    switch(op.getValue())
+    switch(op->getValue())
     {
-        case(Token::OPS_PLUS):
-            return (left.getValue() + right.getValue());
+        case(Op_Token::PLUS):
+            return (left->getValue() + right->getValue());
 
-        case(Token::OPS_MINUS):
-            return (left.getValue() - right.getValue());
+        case(Op_Token::MINUS):
+            return (left->getValue() - right->getValue());
 
-        case(Token::OPS_TIMES):
-            return (left.getValue() * right.getValue());
+        case(Op_Token::TIMES):
+            return (left->getValue() * right->getValue());
 
         default:
             return -1;
@@ -130,10 +128,3 @@ void Interpreter::run()
     }
 }
 
-int main(int argc, char **argv)
-{
-    // Create a new interpreter that runs on stdin
-    Interpreter interp = Interpreter();
-    interp.run();
-    return 0;
-}

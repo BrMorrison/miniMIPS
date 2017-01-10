@@ -20,7 +20,7 @@ class Interpreter {
     // private member functions
     private:
         int exec(const std::string &);
-        void eat(Token::TYPE, const Token &);
+        void eat(Token::Type, Token *);
 
     // private instance variables
         std::istream *text;

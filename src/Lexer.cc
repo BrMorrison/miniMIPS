@@ -1,5 +1,12 @@
 #include "Lexer.h"
 
+// The default constructor
+Lexer::Lexer()
+{
+    input = new std::istringstream("");
+    currentChar = input->peek();
+}
+
 // The primary constructor
 Lexer::Lexer(const std::string &str)
 { 
@@ -8,14 +15,26 @@ Lexer::Lexer(const std::string &str)
     currentChar = input->peek();
 }
 
+Lexer::~Lexer()
+{
+    // clean up the stream
+    delete input;
+    
+    // Go through the tokens we have and clean them up
+    for(auto iter = tokens.begin(); iter != tokens.end(); ++iter)
+    {
+        delete *iter;
+    }
+}
+
 // Parse the next token from the input
-Token Lexer::getNextToken()
+Token *Lexer::getNextToken()
 {
     // Check to see if we've his the EOF
     // and if so, return an END token
     if(input->eof())
     {
-        return Token(Token::TYPE_END);
+        return new Ctrl_Token(Ctrl_Token::END);
     }
 
     // See if we're at some whitespace...
@@ -36,7 +55,7 @@ Token Lexer::getNextToken()
         // to parse it for us.
         *input >> tmp;
         currentChar = input->peek();
-        return Token(Token::TYPE_INTEGER, tmp);
+        return new Int_Token(tmp);
     }
 
     else if(currentChar == '+')
@@ -46,7 +65,7 @@ Token Lexer::getNextToken()
         // get the next character
         currentChar = input->peek();
         // create an addition token
-        return Token(Token::TYPE_OPERATION, Token::OPS_PLUS);
+        return new Op_Token(Op_Token::PLUS);
     }
 
     else if(currentChar == '-')
@@ -54,7 +73,7 @@ Token Lexer::getNextToken()
         // see the '+' description
         *input >> currentChar;
         currentChar = input->peek();
-        return Token(Token::TYPE_OPERATION, Token::OPS_MINUS);
+        return new Op_Token(Op_Token::MINUS);
     }
 
     else if(currentChar == '*')
@@ -62,7 +81,7 @@ Token Lexer::getNextToken()
         // see the '+' description
         *input >> currentChar;
         currentChar = input->peek();
-        return Token(Token::TYPE_OPERATION, Token::OPS_TIMES);
+        return new Op_Token(Op_Token::TIMES);
     }
 
     // It wasn't a characer we support, so throw an error
@@ -73,18 +92,20 @@ Token Lexer::getNextToken()
         oss << "Unexpected character encountered: " << currentChar;
         throw std::runtime_error(oss.str());
     }
-    return Token(Token::TYPE_END);
+    return new Ctrl_Token(Ctrl_Token::END);
 }
 
 // Take the provided string and obtain all the tokens we can
-const std::vector<Token> &Lexer::getTokens()
+const std::vector<Token*> &Lexer::getTokens()
 {
-    Token tmp = this->getNextToken();
-    while(tmp.getType() != Token::TYPE_END)
+    Token *tmp = this->getNextToken();
+    while(!(tmp->getType() == Token::CTRL && tmp->getValue() == Ctrl_Token::END))
     {
         // When we get a token push it onto the vector
         tokens.push_back(tmp);
         tmp = this->getNextToken();
     }
+
+    tokens.push_back(tmp);
     return tokens;
 }
