@@ -26,6 +26,7 @@ void Interpreter::eat(Token::Type token_type, Token *t)
         // Use a string stream to create an informative error message.
         std::ostringstream oss;
         oss << "Unexpected token encountered: " << *t << std::endl;
+        oss << "Expected token of type: " << Token::TypeString(token_type);
         throw std::runtime_error(oss.str());
     }
     // If the token is the right kind, do nothing
@@ -45,7 +46,7 @@ int Interpreter::exec(const std::string &line)
     Token *left, *op, *right;
 
     // Take the line of code and send it to the lexer to get some tokens
-    Lexer lex = Lexer(line);
+    Lexer lex(line);
     // Create an iterator on the vector returned by the lexer so that we can
     // iterate over the tokens.
     auto ct = lex.getTokens().begin();
@@ -61,6 +62,8 @@ int Interpreter::exec(const std::string &line)
     // Get the right side of the expression
     right = *(ct++);
     this->eat(Token::INT, right);
+
+    this->eat(Token::CTRL, *(ct));
 
     // Perform the arithmetic based on the value of op
     switch(op->getValue())
@@ -114,7 +117,9 @@ void Interpreter::run()
         catch (std::runtime_error err)
         {
             std::cerr << err.what() << std::endl;
-            break;
+            std::cout << "Calc>";
+            std::getline(*text, input);
+            continue;
         }
         
         // If the user needs a prompt then print it with the output

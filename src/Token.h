@@ -25,6 +25,8 @@ class Token
 
     // public member functions
     public:
+        static std::string TypeString(Type t);
+
         int getValue() const { return value; }
         virtual std::string valueName() const { return std::to_string(value); }
         virtual Type getType() const = 0;
@@ -59,12 +61,10 @@ class Op_Token : public Token
     };
 
     // public constructors
-    public:
         Op_Token(): Token() { }
         Op_Token(Op val): Token((int)val) { }
 
     // public member functions
-    public:
         Token::Type getType() const override { return Token::OP; }
         std::string typeName() const override { return "OPERATION"; }
         std::string valueName() const override;
@@ -89,4 +89,5 @@ class Ctrl_Token : public Token
         std::string typeName() const override { return "CONTROL"; }
         std::string valueName() const override;
 };
+
 #endif
