@@ -32,9 +32,17 @@ Token *Lexer::getNextToken()
 {
     // Check to see if we've his the EOF
     // and if so, return an END token
-    if(input->eof())
+    if(input->eof() || currentChar == ';')
     {
         return new Ctrl_Token(Ctrl_Token::END);
+    }
+
+    // See if we've encountered a separator
+    else if(currentChar == ',')
+    {
+        *input >> currentChar;
+        currentChar = input->peek();
+        return new Ctrl_Token(Ctrl_Token::SEP);
     }
 
     // See if we're at some whitespace...
@@ -58,41 +66,73 @@ Token *Lexer::getNextToken()
         return new Int_Token(tmp);
     }
 
-    else if(currentChar == '+')
-    {
-        // advance the stream
-        *input >> currentChar;
-        // get the next character
-        currentChar = input->peek();
-        // create an addition token
-        return new Op_Token(Op_Token::PLUS);
-    }
-
+    // See if we've encountered a negative number
     else if(currentChar == '-')
     {
-        // see the '+' description
         *input >> currentChar;
         currentChar = input->peek();
-        return new Op_Token(Op_Token::MINUS);
+
+        // see if the minus was followed by an digit indicating
+        // a negative number
+        if(isdigit(currentChar))
+        {
+            int tmp;
+            *input >> tmp;
+            currentChar = input->peek();
+            return new Int_Token(-1*tmp);
+        }
+
+        // If it wasn't part of a negative, throw an error
+        else
+        {
+            std::ostringstream oss;
+            oss << "Unexpected character encountered: " << currentChar;
+            oss << "Expected a digit after '-' but encountered '"
+                << currentChar << "' instead.";
+            throw std::runtime_error(oss.str());
+        }
     }
 
-    else if(currentChar == '*')
+    // See if we've encountered a register
+    else if(currentChar == '$')
     {
-        // see the '+' description
+        // skip the '$' to get to the register number
         *input >> currentChar;
         currentChar = input->peek();
-        return new Op_Token(Op_Token::TIMES);
+
+        // See if it's a number
+        if(isdigit(currentChar))
+        {
+            int tmp;
+            *input >> tmp;
+            currentChar = input->peek();
+            return new Reg_Token(tmp);
+        }
+
+        // TODO: add 'else if' statements or a switch statement to 
+        // deal with alternative register names.
+
+        else
+        {
+            std::ostringstream oss;
+            oss << "Unexpected character encountered: " << currentChar;
+            oss << "Expected a digit after '$' but encountered '"
+                << currentChar << "' instead.";
+            throw std::runtime_error(oss.str());
+        }
+
     }
 
-    // It wasn't a characer we support, so throw an error
+    // If all else fails, assume it's an opcode
     else
     {
-        // TODO: Modify this to provide more information
-        std::ostringstream oss;
-        oss << "Unexpected character encountered: " << currentChar;
-        throw std::runtime_error(oss.str());
+        std::string tmp;
+        *input >> tmp;
+
+        currentChar = input->peek();
+
+        return new Op_Token(tmp);
     }
-    return new Ctrl_Token(Ctrl_Token::END);
 }
 
 // Take the provided string and obtain all the tokens we can
