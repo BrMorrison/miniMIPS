@@ -27,7 +27,7 @@ class Interpreter {
     // private instance variables
         // An array for the 32 general and 
         // special registers
-        std::array<uint32_t, 34> registers;
+        std::array<uint32_t, 34> regs;
 
         // An istream for input. Will allow me to
         // move away from stdin in the future.

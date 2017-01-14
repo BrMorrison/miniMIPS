@@ -17,7 +17,7 @@ void Interpreter::eat(Token::Type token_type, Token *t)
         // Use a string stream to create an informative error message.
         std::ostringstream oss;
         oss << "Unexpected token encountered: " << *t << std::endl;
-        oss << "Expected token of type: " << Token::TypeString(token_type);
+        oss << "Expected token of type: " << Token::getTypeString(token_type);
         throw std::runtime_error(oss.str());
     }
     // If the token is the right kind, do nothing
@@ -34,7 +34,7 @@ void Interpreter::eat(Token::Type token_type, int token_value, Token *t)
         // Use a string stream to create an informative error message.
         std::ostringstream oss;
         oss << "Unexpected token encountered: " << *t << std::endl;
-        oss << "Expected token of type '" << Token::TypeString(token_type);
+        oss << "Expected token of type '" << Token::getTypeString(token_type);
         oss << "' and value '" << t->valueName() << "'";
         throw std::runtime_error(oss.str());
     }
@@ -54,9 +54,6 @@ int Interpreter::exec(const std::string &line)
 
     Token::Type expected_tok = Token::OP;
 
-    // a vector to hold the operands for the opcode
-    std::vector<Token *> args;
-
     // Take the line of code and send it to the lexer to get some tokens
     Lexer lex(line);
     // Create an iterator on the vector returned by the lexer so that we can
@@ -75,6 +72,8 @@ int Interpreter::exec(const std::string &line)
     expected_tok = Token::REG;
     Ctrl_Token::Ctrl expected_ctrl = Ctrl_Token::SEP;
 
+    // a vector to hold the operands for the opcode
+    std::vector<int> args;
 
     // Loop for collecting the operands for the instruction
     for(unsigned i = 0; i != op->getNumArgs(); ++i)
@@ -97,34 +96,150 @@ int Interpreter::exec(const std::string &line)
         this->eat(expected_tok, tmp);
 
         // Save the token for the execution of the instruction
-        args.push_back(tmp);
+        args.push_back(tmp->getValue());
 
         // Make sure that whatever control token we were expecting comes next
         this->eat(Token::CTRL, expected_ctrl, *(ct++));
     }
 
+    // Make sure the zero regsiter is set to 0 before any operations are performed
+    regs[0] = 0;
 
     // Perform the arithmetic based on the value of op
-    int dest, val1, val2;
     switch(op->getValue())
     {
+        //--------Arithmetic Operations----------
+
+        // Register addition
         case(Op_Token::ADD):
-            dest = args[0]->getValue();
-            val1 = args[1]->getValue();
-            val2 = args[2]->getValue();
-
-            registers[dest] = registers[val1] + registers[val2];
+        case(Op_Token::ADDU):
+            regs[args[0]] = regs[args[1]] + regs[args[2]];
+            return 0;
+        // Immediate addition
+        case(Op_Token::ADDI):
+        case(Op_Token::ADDIU):
+            regs[args[0]] = regs[args[1]] + args[2];
+            return 0;
+        // Subtraction
+        case(Op_Token::SUB):
+        case(Op_Token::SUBU):
+            regs[args[0]] = regs[args[1]] - regs[args[2]];
+            return 0;
+        // Multiplication
+        case(Op_Token::MULT):
+        case(Op_Token::MULTU):
+            // Set LO with the lower word of the result
+            regs[30] = (((uint64_t)regs[args[0]] * (uint64_t)regs[args[1]]) << 32) >> 32;
+            // Set HI with the upper word of the result
+            regs[31] = ((uint64_t)regs[args[0]] * (uint64_t)regs[args[1]]) >> 32;
             return 0;
 
-        case(Op_Token::PRINTD):
-            val1 = args[0]->getValue();
-            std::cout << registers[val1] << std::endl;
+        // Move from special registers
+        case(Op_Token::MFHI):
+            regs[args[0]] = regs[31];
+            return 0;
+        case(Op_Token::MFLO):
+            regs[args[0]] = regs[30];
             return 0;
 
+        //----------Bitwise Operations-----------
+
+        // Register AND
+        case(Op_Token::AND):
+            regs[args[0]] = regs[args[1]] & regs[args[2]];
+            return 0;
+        // Immediate AND
+        case(Op_Token::ANDI):
+            regs[args[0]] = regs[args[1]] & args[2];
+            return 0;
+        // Register OR
+        case(Op_Token::OR):
+            regs[args[0]] = regs[args[1]] | regs[args[2]];
+            return 0;
+        // Immediate OR
+        case(Op_Token::ORI):
+            regs[args[0]] = regs[args[1]] | args[2];
+            return 0;
+        // Register XOR
+        case(Op_Token::XOR):
+            regs[args[0]] = regs[args[1]] ^ regs[args[2]];
+            return 0;
+        // Immediate XOR
+        case(Op_Token::XORI):
+            regs[args[0]] = regs[args[1]] ^ args[2];
+            return 0;
+        // Register NOR
+        case(Op_Token::NOR):
+            regs[args[0]] = ~(regs[args[1]] | regs[args[2]]);
+            return 0;
+
+        //----------Logical Operations-----------
+
+        // Set less than
+        case(Op_Token::SLT):
+            regs[args[0]] = ((int)regs[args[1]]) < ((int)regs[args[2]]);
+            return 0;
+        // Set less than unsigned
+        case(Op_Token::SLTU):
+            regs[args[0]] = ((unsigned)regs[args[1]]) < ((unsigned)regs[args[2]]);
+            return 0;
+        // Set less than immediate
+        case(Op_Token::SLTI):
+            regs[args[0]] = ((int)regs[args[1]]) < ((int)args[2]);
+            return 0;
+                
+        //----------Shift Operations-----------
+
+        // Immediate logical left shift
+        case(Op_Token::SLL):
+            regs[args[0]] = regs[args[1]] << args[2];
+            return 0;
+        // Immediate logical right shift
+        case(Op_Token::SRL):
+            regs[args[0]] = ((unsigned)regs[args[1]]) >> args[2];
+            return 0;
+        // Immediate arithmetic right shift
+        case(Op_Token::SRA):
+            regs[args[0]] = ((int)regs[args[1]]) >> args[2];
+            return 0;
+        // Logical left shift
+        case(Op_Token::SLLV):
+            regs[args[0]] = regs[args[1]] << regs[args[2]];
+            return 0;
+        // Logical right shift
+        case(Op_Token::SRLV):
+            regs[args[0]] = ((unsigned)regs[args[1]]) >> regs[args[2]];
+            return 0;
+        // Arithmetic right shift
+        case(Op_Token::SRAV):
+            regs[args[0]] = ((int)regs[args[1]]) >> regs[args[2]];
+            return 0;
+
+        //----------Psuedo Operations-----------
+
+        // Move value
+        case(Op_Token::MOVE):
+            regs[args[0]] = regs[args[1]];
+            return 0;
+        // Clear register
+        case(Op_Token::CLEAR):
+            regs[args[0]] = 0;
+            return 0;
+        // Bitwise not
+        case(Op_Token::NOT):
+            regs[args[0]] = ~(regs[args[1]]);
+            return 0;
+        // Load immediate
         case(Op_Token::LI):
-            dest = args[0]->getValue();
-            val1 = args[1]->getValue();
-            registers[dest] = val1;
+            regs[args[0]] = args[1];
+            return 0;
+        // print unsigned
+        case(Op_Token::PRINTU):
+            std::cout << (uint32_t)regs[args[0]] << std::endl;
+            return 0;
+        // print signed
+        case(Op_Token::PRINTS):
+            std::cout << (int32_t)regs[args[0]] << std::endl;
             return 0;
 
         default:

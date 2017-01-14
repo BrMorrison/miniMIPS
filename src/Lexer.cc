@@ -32,7 +32,7 @@ Token *Lexer::getNextToken()
 {
     // Check to see if we've his the EOF
     // and if so, return an END token
-    if(input->eof())
+    if(input->eof() || currentChar == ';')
     {
         return new Ctrl_Token(Ctrl_Token::END);
     }
@@ -123,7 +123,7 @@ Token *Lexer::getNextToken()
 
     }
 
-    // Check to see if it's an opcode
+    // If all else fails, assume it's an opcode
     else
     {
         std::string tmp;
@@ -131,22 +131,7 @@ Token *Lexer::getNextToken()
 
         currentChar = input->peek();
 
-        auto beg = Op_Token::GetOpNames().cbegin();
-        auto end = Op_Token::GetOpNames().cend();
-        for(auto iter = beg; iter != end; ++iter)
-        {
-            if(tmp == *iter)
-            {
-                return new Op_Token((Op_Token::Op)(iter-beg));
-            }
-        }
-
-        // This is the end of the line so if it's not an opcode,
-        // throw an error.
-        std::ostringstream oss;
-        oss << "Unexpected word encountered: " << tmp << std::endl;
-        oss << "Expected a number or valid uppercase opcode.";
-        throw std::runtime_error(oss.str());
+        return new Op_Token(tmp);
     }
 }
 

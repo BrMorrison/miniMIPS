@@ -21,9 +21,12 @@ public:
     // string stream we create for the input.
     ~Lexer();
 
+    // Produces a vector of Tokens generated from the string in the
+    // order that they were encountered
     const std::vector<Token*> &getTokens();
 
 private:
+    // Gets a pointer to the next token from the string
     Token *getNextToken();
 
     std::vector<Token*> tokens;
